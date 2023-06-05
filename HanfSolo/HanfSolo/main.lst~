@@ -1,0 +1,354 @@
+main                                                                                                                    PAGE 1
+                         1     cseg at 0h
+0000 020100              2     ljmp init
+                         3     org 100h
+                         4
+                         5     init:
+                 =1      6     .include "declaration.asm"
+                 =1      7     ; buttons
+  0080           =1      8     t_cur equ P0.0
+  0081           =1      9     t_min equ P0.1
+  0082           =1     10     t_max equ P0.2
+                 =1     11
+                 =1     12     ; sensor
+  0085           =1     13     ds1620_dq equ P0.5
+  0086           =1     14     ds1620_clk equ P0.6
+  0087           =1     15     ds1620_rst equ P0.7
+                 =1     16
+                 =1     17     ; internal stuff
+  0020           =1     18     is_negative equ 20h
+                 =1     19     cur_temp equ r0
+  0000           =1     20     window equ 0h
+0100 120114             21     call ds1620_reset
+0103 120132             22     call ds1620_start_convert
+                        23
+                        24     main:
+0106 120114             25     call ds1620_reset
+0109 120119             26     call ds1620_start_reading
+010C 12014B             27     call ds1620_get_temp
+010F 1201A4             28     call check_temperature_above
+0112 2106               29     ajmp main
+                        30
+                 =1     31     .include "ds1620.asm"
+                 =1     32     ds1620_reset:
+0114 C287        =1     33     clr ds1620_rst
+0116 D287        =1     34     setb ds1620_rst
+0118 22          =1     35     ret
+                 =1     36
+                 =1     37     ds1620_start_reading:
+0119 120196      =1     38     call ds1620_send_0
+011C 12019D      =1     39     call ds1620_send_1
+011F 120196      =1     40     call ds1620_send_0
+0122 12019D      =1     41     call ds1620_send_1
+0125 120196      =1     42     call ds1620_send_0
+0128 12019D      =1     43     call ds1620_send_1
+012B 120196      =1     44     call ds1620_send_0
+012E 12019D      =1     45     call ds1620_send_1
+0131 22          =1     46     ret
+                 =1     47
+                 =1     48     ds1620_start_convert:
+0132 120196      =1     49     call ds1620_send_0
+0135 12019D      =1     50     call ds1620_send_1
+0138 12019D      =1     51     call ds1620_send_1
+013B 12019D      =1     52     call ds1620_send_1
+013E 120196      =1     53     call ds1620_send_0
+0141 12019D      =1     54     call ds1620_send_1
+0144 12019D      =1     55     call ds1620_send_1
+0147 12019D      =1     56     call ds1620_send_1
+014A 22          =1     57     ret
+                 =1     58
+                 =1     59     ds1620_get_temp:
+                 =1     60
+                 =1     61     ; read 1st bit
+014B C286        =1     62     clr ds1620_clk
+014D A285        =1     63     mov c, ds1620_dq
+014F 9200        =1     64     mov 00h, c
+0151 D286        =1     65     setb ds1620_clk
+                 =1     66
+                 =1     67     ; read 2nd bit
+0153 C286        =1     68     clr ds1620_clk
+0155 A285        =1     69     mov c, ds1620_dq
+0157 9201        =1     70     mov 01h, c
+0159 D286        =1     71     setb ds1620_clk
+                 =1     72
+                 =1     73     ; read 3rd bit
+015B C286        =1     74     clr ds1620_clk
+015D A285        =1     75     mov c, ds1620_dq
+015F 9202        =1     76     mov 02h, c
+0161 D286        =1     77     setb ds1620_clk
+                 =1     78
+                 =1     79     ; read 4th bit
+0163 C286        =1     80     clr ds1620_clk
+0165 A285        =1     81     mov c, ds1620_dq
+0167 9203        =1     82     mov 03h, c
+0169 D286        =1     83     setb ds1620_clk
+                 =1     84
+                 =1     85     ; read 5th bit
+016B C286        =1     86     clr ds1620_clk
+016D A285        =1     87     mov c, ds1620_dq
+016F 9204        =1     88     mov 04h, c
+0171 D286        =1     89     setb ds1620_clk
+                 =1     90
+                 =1     91     ; read 6th bit
+0173 C286        =1     92     clr ds1620_clk
+0175 A285        =1     93     mov c, ds1620_dq
+0177 9205        =1     94     mov 05h, c
+0179 D286        =1     95     setb ds1620_clk
+                 =1     96
+                 =1     97     ; read 7th bit
+017B C286        =1     98     clr ds1620_clk
+017D A285        =1     99     mov c, ds1620_dq
+017F 9206        =1    100     mov 06h, c
+0181 D286        =1    101     setb ds1620_clk
+                 =1    102
+                 =1    103     ; read 8th bit
+0183 C286        =1    104     clr ds1620_clk
+0185 A285        =1    105     mov c, ds1620_dq
+0187 9207        =1    106     mov 07h, c
+0189 D286        =1    107     setb ds1620_clk
+018B A820        =1    108     mov cur_temp, 20h
+                 =1    109
+                 =1    110     ; read 9th bit
+018D C286        =1    111     clr ds1620_clk
+018F A285        =1    112     mov c, ds1620_dq
+0191 9220        =1    113     mov is_negative, c
+0193 D286        =1    114     setb ds1620_clk
+0195 22          =1    115     ret
+                 =1    116
+                 =1    117     ds1620_send_0:
+0196 C285        =1    118     clr ds1620_dq
+0198 C286        =1    119     clr ds1620_clk
+019A D286        =1    120     setb ds1620_clk
+019C 22          =1    121     ret
+                 =1    122
+                 =1    123     ds1620_send_1:
+019D D285        =1    124     setb ds1620_dq
+019F C286        =1    125     clr ds1620_clk
+01A1 D286        =1    126     setb ds1620_clk
+01A3 22          =1    127     ret
+                 =1    128     .include "window.asm"
+                 =1    129     check_temperature_above:
+01A4 E8          =1    130         mov a, cur_temp     ; Lade aktuelle Temperatur in das Akkumulator-Register
+                 =1    131
+01A5 75F01C      =1    132         mov b, #28         ; Setze Grenzwert für Fensteröffnung auf 28 Grad
+01A8 B5F002      =1    133         cjne a, b, check_temperature_below
+                 =1    134
+                 =1    135         ; Die Temperatur ist größer oder gleich 28 Grad
+                 =1    136         ; Setze das Fensteröffnungs-Bit
+01AB D200        =1    137         setb window
+                 =1    138
+                 =1    139     check_temperature_below:
+01AD 75F018      =1    140         mov b, #24         ; Setze Grenzwert für Fensterschließung auf 24 Grad
+01B0 B5F002      =1    141         cjne a, b, empty
+                 =1    142
+                 =1    143         ; Die Temperatur ist kleiner als 24 Grad
+                 =1    144         ; Lösche das Fensteröffnungs-Bit
+01B3 C200        =1    145         clr window
+                 =1    146
+                 =1    147     empty:
+                       148
+                       149     end
+ASSEMBLY COMPLETE, NO ERRORS FOUND, NO WARNINGS
+
+
+SYMBOL TABLE:
+??MCU_8051_IDE . . . . . . . . . . .  N  NUMB  8051H  NOT USED
+??VERSION. . . . . . . . . . . . . .  N  NUMB  0149H  NOT USED
+AC . . . . . . . . . . . . . . . . .  B  ADDR  00D6H  NOT USED
+ACC. . . . . . . . . . . . . . . . .  D  ADDR  00E0H  NOT USED
+ACSR . . . . . . . . . . . . . . . .  D  ADDR  0097H  NOT USED
+ADCF . . . . . . . . . . . . . . . .  D  ADDR  00F6H  NOT USED
+ADCLK. . . . . . . . . . . . . . . .  D  ADDR  00F2H  NOT USED
+ADCON. . . . . . . . . . . . . . . .  D  ADDR  00F3H  NOT USED
+ADDH . . . . . . . . . . . . . . . .  D  ADDR  00F5H  NOT USED
+ADDL . . . . . . . . . . . . . . . .  D  ADDR  00F4H  NOT USED
+AUXR . . . . . . . . . . . . . . . .  D  ADDR  008EH  NOT USED
+AUXR1. . . . . . . . . . . . . . . .  D  ADDR  00A2H  NOT USED
+B. . . . . . . . . . . . . . . . . .  D  ADDR  00F0H
+BDRCON . . . . . . . . . . . . . . .  D  ADDR  009BH  NOT USED
+BDRCON_1 . . . . . . . . . . . . . .  D  ADDR  009CH  NOT USED
+BRL. . . . . . . . . . . . . . . . .  D  ADDR  009AH  NOT USED
+CCAP0H . . . . . . . . . . . . . . .  D  ADDR  00FAH  NOT USED
+CCAP0L . . . . . . . . . . . . . . .  D  ADDR  00EAH  NOT USED
+CCAP1H . . . . . . . . . . . . . . .  D  ADDR  00FBH  NOT USED
+CCAP1L . . . . . . . . . . . . . . .  D  ADDR  00EBH  NOT USED
+CCAP2H . . . . . . . . . . . . . . .  D  ADDR  00FCH  NOT USED
+CCAP3H . . . . . . . . . . . . . . .  D  ADDR  00FDH  NOT USED
+CCAP4H . . . . . . . . . . . . . . .  D  ADDR  00FEH  NOT USED
+CCAPL2H. . . . . . . . . . . . . . .  D  ADDR  00FCH  NOT USED
+CCAPL2L. . . . . . . . . . . . . . .  D  ADDR  00ECH  NOT USED
+CCAPL3H. . . . . . . . . . . . . . .  D  ADDR  00FDH  NOT USED
+CCAPL3L. . . . . . . . . . . . . . .  D  ADDR  00EDH  NOT USED
+CCAPL4H. . . . . . . . . . . . . . .  D  ADDR  00FEH  NOT USED
+CCAPL4L. . . . . . . . . . . . . . .  D  ADDR  00EEH  NOT USED
+CCAPM0 . . . . . . . . . . . . . . .  D  ADDR  00DAH  NOT USED
+CCAPM1 . . . . . . . . . . . . . . .  D  ADDR  00DBH  NOT USED
+CCAPM2 . . . . . . . . . . . . . . .  D  ADDR  00DCH  NOT USED
+CCAPM3 . . . . . . . . . . . . . . .  D  ADDR  00DDH  NOT USED
+CCAPM4 . . . . . . . . . . . . . . .  D  ADDR  00DEH  NOT USED
+CCF0 . . . . . . . . . . . . . . . .  B  ADDR  00D8H  NOT USED
+CCF1 . . . . . . . . . . . . . . . .  B  ADDR  00D9H  NOT USED
+CCF2 . . . . . . . . . . . . . . . .  B  ADDR  00DAH  NOT USED
+CCF3 . . . . . . . . . . . . . . . .  B  ADDR  00DBH  NOT USED
+CCF4 . . . . . . . . . . . . . . . .  B  ADDR  00DCH  NOT USED
+CCON . . . . . . . . . . . . . . . .  D  ADDR  00D8H  NOT USED
+CFINT. . . . . . . . . . . . . . . .  C  ADDR  0033H  NOT USED
+CH . . . . . . . . . . . . . . . . .  D  ADDR  00F9H  NOT USED
+CHECK_TEMPERATURE_ABOVE. . . . . . .  C  ADDR  01A4H
+CHECK_TEMPERATURE_BELOW. . . . . . .  C  ADDR  01ADH
+CKCON. . . . . . . . . . . . . . . .  D  ADDR  008FH  NOT USED
+CKCON0 . . . . . . . . . . . . . . .  D  ADDR  008FH  NOT USED
+CKRL . . . . . . . . . . . . . . . .  D  ADDR  0097H  NOT USED
+CKSEL. . . . . . . . . . . . . . . .  D  ADDR  0085H  NOT USED
+CL . . . . . . . . . . . . . . . . .  D  ADDR  00E9H  NOT USED
+CLKREG . . . . . . . . . . . . . . .  D  ADDR  008FH  NOT USED
+CMOD . . . . . . . . . . . . . . . .  D  ADDR  00D9H  NOT USED
+CPRL2. . . . . . . . . . . . . . . .  B  ADDR  00C8H  NOT USED
+CR . . . . . . . . . . . . . . . . .  B  ADDR  00DEH  NOT USED
+CT2. . . . . . . . . . . . . . . . .  B  ADDR  00C9H  NOT USED
+CUR_TEMP . . . . . . . . . . . . . .  S  SPEC  R0
+CY . . . . . . . . . . . . . . . . .  B  ADDR  00D7H  NOT USED
+DP0H . . . . . . . . . . . . . . . .  D  ADDR  0083H  NOT USED
+DP0L . . . . . . . . . . . . . . . .  D  ADDR  0082H  NOT USED
+DP1H . . . . . . . . . . . . . . . .  D  ADDR  0085H  NOT USED
+DP1L . . . . . . . . . . . . . . . .  D  ADDR  0084H  NOT USED
+DPH. . . . . . . . . . . . . . . . .  D  ADDR  0083H  NOT USED
+DPL. . . . . . . . . . . . . . . . .  D  ADDR  0082H  NOT USED
+DS1620_CLK . . . . . . . . . . . . .  N  NUMB  0086H
+DS1620_DQ. . . . . . . . . . . . . .  N  NUMB  0085H
+DS1620_GET_TEMP. . . . . . . . . . .  C  ADDR  014BH
+DS1620_RESET . . . . . . . . . . . .  C  ADDR  0114H
+DS1620_RST . . . . . . . . . . . . .  N  NUMB  0087H
+DS1620_SEND_0. . . . . . . . . . . .  C  ADDR  0196H
+DS1620_SEND_1. . . . . . . . . . . .  C  ADDR  019DH
+DS1620_START_CONVERT . . . . . . . .  C  ADDR  0132H
+DS1620_START_READING . . . . . . . .  C  ADDR  0119H
+EA . . . . . . . . . . . . . . . . .  B  ADDR  00AFH  NOT USED
+EC . . . . . . . . . . . . . . . . .  B  ADDR  00AEH  NOT USED
+EECON. . . . . . . . . . . . . . . .  D  ADDR  0096H  NOT USED
+EMPTY. . . . . . . . . . . . . . . .  C  ADDR  01B5H
+ES . . . . . . . . . . . . . . . . .  B  ADDR  00ACH  NOT USED
+ET0. . . . . . . . . . . . . . . . .  B  ADDR  00A9H  NOT USED
+ET1. . . . . . . . . . . . . . . . .  B  ADDR  00ABH  NOT USED
+ET2. . . . . . . . . . . . . . . . .  B  ADDR  00ADH  NOT USED
+EX0. . . . . . . . . . . . . . . . .  B  ADDR  00A8H  NOT USED
+EX1. . . . . . . . . . . . . . . . .  B  ADDR  00AAH  NOT USED
+EXEN2. . . . . . . . . . . . . . . .  B  ADDR  00CBH  NOT USED
+EXF2 . . . . . . . . . . . . . . . .  B  ADDR  00CEH  NOT USED
+EXTI0. . . . . . . . . . . . . . . .  C  ADDR  0003H  NOT USED
+EXTI1. . . . . . . . . . . . . . . .  C  ADDR  0013H  NOT USED
+F0 . . . . . . . . . . . . . . . . .  B  ADDR  00D5H  NOT USED
+FE . . . . . . . . . . . . . . . . .  B  ADDR  009FH  NOT USED
+IE . . . . . . . . . . . . . . . . .  D  ADDR  00A8H  NOT USED
+IE0. . . . . . . . . . . . . . . . .  B  ADDR  0089H  NOT USED
+IE1. . . . . . . . . . . . . . . . .  B  ADDR  008BH  NOT USED
+INIT . . . . . . . . . . . . . . . .  C  ADDR  0100H
+INT0 . . . . . . . . . . . . . . . .  B  ADDR  00B2H  NOT USED
+INT1 . . . . . . . . . . . . . . . .  B  ADDR  00B3H  NOT USED
+IP . . . . . . . . . . . . . . . . .  D  ADDR  00B8H  NOT USED
+IPH. . . . . . . . . . . . . . . . .  D  ADDR  00B7H  NOT USED
+IPH0 . . . . . . . . . . . . . . . .  D  ADDR  00B7H  NOT USED
+IPH1 . . . . . . . . . . . . . . . .  D  ADDR  00B3H  NOT USED
+IPL0 . . . . . . . . . . . . . . . .  D  ADDR  00B8H  NOT USED
+IPL1 . . . . . . . . . . . . . . . .  D  ADDR  00B2H  NOT USED
+IS_NEGATIVE. . . . . . . . . . . . .  N  NUMB  0020H
+IT0. . . . . . . . . . . . . . . . .  B  ADDR  0088H  NOT USED
+IT1. . . . . . . . . . . . . . . . .  B  ADDR  008AH  NOT USED
+KBE. . . . . . . . . . . . . . . . .  D  ADDR  009DH  NOT USED
+KBF. . . . . . . . . . . . . . . . .  D  ADDR  009EH  NOT USED
+KBLS . . . . . . . . . . . . . . . .  D  ADDR  009CH  NOT USED
+MAIN . . . . . . . . . . . . . . . .  C  ADDR  0106H
+OSCCON . . . . . . . . . . . . . . .  D  ADDR  0086H  NOT USED
+OV . . . . . . . . . . . . . . . . .  B  ADDR  00D2H  NOT USED
+P. . . . . . . . . . . . . . . . . .  B  ADDR  00D0H  NOT USED
+P0 . . . . . . . . . . . . . . . . .  D  ADDR  0080H  NOT USED
+P1 . . . . . . . . . . . . . . . . .  D  ADDR  0090H  NOT USED
+P1M1 . . . . . . . . . . . . . . . .  D  ADDR  00D4H  NOT USED
+P1M2 . . . . . . . . . . . . . . . .  D  ADDR  00E2H  NOT USED
+P2 . . . . . . . . . . . . . . . . .  D  ADDR  00A0H  NOT USED
+P3 . . . . . . . . . . . . . . . . .  D  ADDR  00B0H  NOT USED
+P3M1 . . . . . . . . . . . . . . . .  D  ADDR  00D5H  NOT USED
+P3M2 . . . . . . . . . . . . . . . .  D  ADDR  00E3H  NOT USED
+P4 . . . . . . . . . . . . . . . . .  D  ADDR  00C0H  NOT USED
+P4M1 . . . . . . . . . . . . . . . .  D  ADDR  00D6H  NOT USED
+P4M2 . . . . . . . . . . . . . . . .  D  ADDR  00E4H  NOT USED
+P5 . . . . . . . . . . . . . . . . .  D  ADDR  00E8H  NOT USED
+PC . . . . . . . . . . . . . . . . .  B  ADDR  00BEH  NOT USED
+PCON . . . . . . . . . . . . . . . .  D  ADDR  0087H  NOT USED
+PPCL . . . . . . . . . . . . . . . .  B  ADDR  00BEH  NOT USED
+PS . . . . . . . . . . . . . . . . .  B  ADDR  00BCH  NOT USED
+PSL. . . . . . . . . . . . . . . . .  B  ADDR  00BCH  NOT USED
+PSW. . . . . . . . . . . . . . . . .  D  ADDR  00D0H  NOT USED
+PT0. . . . . . . . . . . . . . . . .  B  ADDR  00B9H  NOT USED
+PT0L . . . . . . . . . . . . . . . .  B  ADDR  00B9H  NOT USED
+PT1. . . . . . . . . . . . . . . . .  B  ADDR  00BBH  NOT USED
+PT1L . . . . . . . . . . . . . . . .  B  ADDR  00BBH  NOT USED
+PT2. . . . . . . . . . . . . . . . .  B  ADDR  00BDH  NOT USED
+PT2L . . . . . . . . . . . . . . . .  B  ADDR  00BDH  NOT USED
+PX0. . . . . . . . . . . . . . . . .  B  ADDR  00B8H  NOT USED
+PX0L . . . . . . . . . . . . . . . .  B  ADDR  00B8H  NOT USED
+PX1. . . . . . . . . . . . . . . . .  B  ADDR  00BAH  NOT USED
+PX1L . . . . . . . . . . . . . . . .  B  ADDR  00BAH  NOT USED
+RB8. . . . . . . . . . . . . . . . .  B  ADDR  009AH  NOT USED
+RCAP2H . . . . . . . . . . . . . . .  D  ADDR  00CBH  NOT USED
+RCAP2L . . . . . . . . . . . . . . .  D  ADDR  00CAH  NOT USED
+RCLK . . . . . . . . . . . . . . . .  B  ADDR  00CDH  NOT USED
+RD . . . . . . . . . . . . . . . . .  B  ADDR  00B7H  NOT USED
+REN. . . . . . . . . . . . . . . . .  B  ADDR  009CH  NOT USED
+RESET. . . . . . . . . . . . . . . .  C  ADDR  0000H  NOT USED
+RI . . . . . . . . . . . . . . . . .  B  ADDR  0098H  NOT USED
+RS0. . . . . . . . . . . . . . . . .  B  ADDR  00D3H  NOT USED
+RS1. . . . . . . . . . . . . . . . .  B  ADDR  00D4H  NOT USED
+RXD. . . . . . . . . . . . . . . . .  B  ADDR  00B0H  NOT USED
+SADDR. . . . . . . . . . . . . . . .  D  ADDR  00A9H  NOT USED
+SADDR_0. . . . . . . . . . . . . . .  D  ADDR  00A9H  NOT USED
+SADDR_1. . . . . . . . . . . . . . .  D  ADDR  00AAH  NOT USED
+SADEN. . . . . . . . . . . . . . . .  D  ADDR  00B9H  NOT USED
+SADEN_0. . . . . . . . . . . . . . .  D  ADDR  00B9H  NOT USED
+SADEN_1. . . . . . . . . . . . . . .  D  ADDR  00BAH  NOT USED
+SBUF . . . . . . . . . . . . . . . .  D  ADDR  0099H  NOT USED
+SCON . . . . . . . . . . . . . . . .  D  ADDR  0098H  NOT USED
+SINT . . . . . . . . . . . . . . . .  C  ADDR  0023H  NOT USED
+SM0. . . . . . . . . . . . . . . . .  B  ADDR  009FH  NOT USED
+SM1. . . . . . . . . . . . . . . . .  B  ADDR  009EH  NOT USED
+SM2. . . . . . . . . . . . . . . . .  B  ADDR  009DH  NOT USED
+SP . . . . . . . . . . . . . . . . .  D  ADDR  0081H  NOT USED
+SPCON. . . . . . . . . . . . . . . .  D  ADDR  00C3H  NOT USED
+SPCR . . . . . . . . . . . . . . . .  D  ADDR  00D5H  NOT USED
+SPDAT. . . . . . . . . . . . . . . .  D  ADDR  00C5H  NOT USED
+SPDR . . . . . . . . . . . . . . . .  D  ADDR  0086H  NOT USED
+SPSR . . . . . . . . . . . . . . . .  D  ADDR  00AAH  NOT USED
+SPSTA. . . . . . . . . . . . . . . .  D  ADDR  00C4H  NOT USED
+T0 . . . . . . . . . . . . . . . . .  B  ADDR  00B4H  NOT USED
+T1 . . . . . . . . . . . . . . . . .  B  ADDR  00B5H  NOT USED
+T2CON. . . . . . . . . . . . . . . .  D  ADDR  00C8H  NOT USED
+T2MOD. . . . . . . . . . . . . . . .  D  ADDR  00C9H  NOT USED
+TB8. . . . . . . . . . . . . . . . .  B  ADDR  009BH  NOT USED
+TCLK . . . . . . . . . . . . . . . .  B  ADDR  00CCH  NOT USED
+TCON . . . . . . . . . . . . . . . .  D  ADDR  0088H  NOT USED
+TF0. . . . . . . . . . . . . . . . .  B  ADDR  008DH  NOT USED
+TF1. . . . . . . . . . . . . . . . .  B  ADDR  008FH  NOT USED
+TF2. . . . . . . . . . . . . . . . .  B  ADDR  00CFH  NOT USED
+TH0. . . . . . . . . . . . . . . . .  D  ADDR  008CH  NOT USED
+TH1. . . . . . . . . . . . . . . . .  D  ADDR  008DH  NOT USED
+TH2. . . . . . . . . . . . . . . . .  D  ADDR  00CDH  NOT USED
+TI . . . . . . . . . . . . . . . . .  B  ADDR  0099H  NOT USED
+TIMER0 . . . . . . . . . . . . . . .  C  ADDR  000BH  NOT USED
+TIMER1 . . . . . . . . . . . . . . .  C  ADDR  001BH  NOT USED
+TIMER2 . . . . . . . . . . . . . . .  C  ADDR  002BH  NOT USED
+TL0. . . . . . . . . . . . . . . . .  D  ADDR  008AH  NOT USED
+TL1. . . . . . . . . . . . . . . . .  D  ADDR  008BH  NOT USED
+TL2. . . . . . . . . . . . . . . . .  D  ADDR  00CCH  NOT USED
+TMOD . . . . . . . . . . . . . . . .  D  ADDR  0089H  NOT USED
+TR0. . . . . . . . . . . . . . . . .  B  ADDR  008CH  NOT USED
+TR1. . . . . . . . . . . . . . . . .  B  ADDR  008EH  NOT USED
+TR2. . . . . . . . . . . . . . . . .  B  ADDR  00CAH  NOT USED
+TXD. . . . . . . . . . . . . . . . .  B  ADDR  00B1H  NOT USED
+T_CUR. . . . . . . . . . . . . . . .  N  NUMB  0080H  NOT USED
+T_MAX. . . . . . . . . . . . . . . .  N  NUMB  0082H  NOT USED
+T_MIN. . . . . . . . . . . . . . . .  N  NUMB  0081H  NOT USED
+WDTCON . . . . . . . . . . . . . . .  D  ADDR  00A7H  NOT USED
+WDTPRG . . . . . . . . . . . . . . .  D  ADDR  00A7H  NOT USED
+WDTRST . . . . . . . . . . . . . . .  D  ADDR  00A6H  NOT USED
+WINDOW . . . . . . . . . . . . . . .  N  NUMB  0000H
+WR . . . . . . . . . . . . . . . . .  B  ADDR  00B6H  NOT USED
